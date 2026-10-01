@@ -8,7 +8,7 @@ const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
 const PAID_WEBHOOK = process.env.PAID_DISCORD_WEBHOOK_URL;
 const FREE_WEBHOOK = process.env.FREE_DISCORD_WEBHOOK_URL;
 const MIN_SCORE = 85;
-const THIRTY_S = 1000 * 60 * 30; // 30 min
+const THIRTY_S = 1000 * 60 * 60 * 24; // 24h TEST
 
 const QUERIES = [
   { q: "looking for a video editor", src: "shortform" },
