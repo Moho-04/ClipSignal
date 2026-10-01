@@ -91,6 +91,7 @@ async function collectReddit(q) {
 }
 
 // ---------- SCORING ----------
+// ---------- SCORING ----------
 async function scoreBatch(posts) {
   const prompt = `You score freelance-buying-intent posts. For each post return JSON array of
 {"i":<index>,"score":0-100,"reasons":["..."],"is_hiring":true|false}.
@@ -100,14 +101,22 @@ Score high ONLY if someone is actively seeking to hire a freelancer NOW:
 - <70: chatter, portfolios, jokes, offers TO work, old/incomplete
 Never invent budgets. Posts:
 ${posts.map((p, i) => `[${i}] ${p.source}: ${p.text}`).join("\n")}`;
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.1, responseMimeType: "application/json" } }),
-  });
-  if (!r.ok) throw new Error(`Gemini ${r.status}`);
-  const data = await r.json();
-  return JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text || "[]");
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`;
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    const r = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.1, responseMimeType: "application/json" } }),
+    });
+    if (r.ok) {
+      const data = await r.json();
+      return JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text || "[]");
+    }
+    console.error(`Gemini attempt ${attempt} failed: ${r.status}`);
+    if (r.status !== 503 && r.status !== 429) throw new Error(`Gemini ${r.status}`);
+    await sleep(6000 * attempt); // wait 6s, 12s, 18s, 24s — Google busy, try again
+  }
+  throw new Error("Gemini unavailable after 4 attempts — will retry next cron run");
 }
 
 // ---------- FORMAT ----------
