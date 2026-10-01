@@ -96,35 +96,39 @@ async function freeQuotaLeft() {
 }
 
 // ---------- MAIN ----------
-const raw = [];
-for (const q of QUERIES) {
-  try { raw.push(...(await collectBluesky(q.q))); } catch (e) { console.error("bsky", e.message); }
-  try { raw.push(...(await collectHN(q.q))); } catch (e) { console.error("hn", e.message); }
-  try { raw.push(...(await collectReddit(q))); } catch (e) { console.error("rd", e.message); }
-  await sleep(1500); // be polite
-}
-console.log(`Collected ${raw.length} raw posts`);
-
-const fresh = raw.filter(p => p.text && Date.now() - new Date(p.created) < THIRTY_S
-  && /look|need|hire|search|recommend|anyone know/i.test(p.text));
-if (!fresh.length) return console.log("Nothing fresh — done.");
-
-const scores = await scoreBatch(fresh.slice(0, 40));
-let freeLeft = await freeQuotaLeft();
-let sent = 0;
-
-for (const s of scores.filter(s => s.is_hiring && s.score >= MIN_SCORE)) {
-  const p = fresh[s.i]; if (!p) continue;
-  const inserted = await sql`INSERT INTO published (id, ts, free) VALUES (${p.id}, now(), false) ON CONFLICT (id) DO NOTHING RETURNING id`;
-  if (!inserted.length) continue; // already published
-  await fetch(PAID_WEBHOOK, { method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ content: fmt(p, s) }) });
-  if (freeLeft > 0) {
-    await fetch(FREE_WEBHOOK, { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: `🆓 Free sample — ${fmt(p, s)}\n*Full feed: paid tier*` }) });
-    await sql`UPDATE published SET free = true WHERE id = ${p.id}`;
-    freeLeft--;
+async function main() {
+  const raw = [];
+  for (const q of QUERIES) {
+    try { raw.push(...(await collectBluesky(q.q))); } catch (e) { console.error("bsky", e.message); }
+    try { raw.push(...(await collectHN(q.q))); } catch (e) { console.error("hn", e.message); }
+    try { raw.push(...(await collectReddit(q))); } catch (e) { console.error("rd", e.message); }
+    await sleep(1500); // be polite
   }
-  sent++; await sleep(1200);
+  console.log(`Collected ${raw.length} raw posts`);
+
+  const fresh = raw.filter(p => p.text && Date.now() - new Date(p.created) < THIRTY_S
+    && /look|need|hire|search|recommend|anyone know/i.test(p.text));
+  if (!fresh.length) { console.log("Nothing fresh — done."); return; }
+
+  const scores = await scoreBatch(fresh.slice(0, 40));
+  let freeLeft = await freeQuotaLeft();
+  let sent = 0;
+
+  for (const s of scores.filter(s => s.is_hiring && s.score >= MIN_SCORE)) {
+    const p = fresh[s.i]; if (!p) continue;
+    const inserted = await sql`INSERT INTO published (id, ts, free) VALUES (${p.id}, now(), false) ON CONFLICT (id) DO NOTHING RETURNING id`;
+    if (!inserted.length) continue; // already published
+    await fetch(PAID_WEBHOOK, { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: fmt(p, s) }) });
+    if (freeLeft > 0 && FREE_WEBHOOK) {
+      await fetch(FREE_WEBHOOK, { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: `🆓 Free sample — ${fmt(p, s)}\n*Full feed: paid tier*` }) });
+      await sql`UPDATE published SET free = true WHERE id = ${p.id}`;
+      freeLeft--;
+    }
+    sent++; await sleep(1200);
+  }
+  console.log(`Published ${sent} leads`);
 }
-console.log(`Published ${sent} leads`);
+
+main().catch(e => { console.error("FATAL:", e); process.exit(1); });
