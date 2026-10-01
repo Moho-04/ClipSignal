@@ -11,11 +11,16 @@ const MIN_SCORE = 85;
 const THIRTY_S = 1000 * 60 * 30; // 30 min
 
 const QUERIES = [
-  { q: '"looking for a video editor"', src: "shortform" },
-  { q: '"need a video editor"',       src: "shortform" },
-  { q: '"editor for my channel"',     src: "shortform" },
-  { q: '"looking for a designer"',    src: "design" },
-  { q: '"looking for a web developer"', src: "webdev" },
+  { q: "looking for a video editor", src: "shortform" },
+  { q: "need a video editor",        src: "shortform" },
+  { q: "need an editor",             src: "shortform" },
+  { q: "looking for an editor",      src: "shortform" },
+  { q: "hiring video editor",        src: "shortform" },
+  { q: "editor for my channel",      src: "shortform" },
+  { q: "looking for a designer",     src: "design" },
+  { q: "need a designer",            src: "design" },
+  { q: "looking for a web developer", src: "webdev" },
+  { q: "need a web developer",       src: "webdev" },
 ];
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
