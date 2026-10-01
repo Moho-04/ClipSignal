@@ -4,7 +4,7 @@ import { neon } from "@neondatabase/serverless";
 
 const sql = neon(process.env.DATABASE_URL);
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
 const PAID_WEBHOOK = process.env.PAID_DISCORD_WEBHOOK_URL;
 const FREE_WEBHOOK = process.env.FREE_DISCORD_WEBHOOK_URL;
 const MIN_SCORE = 85;
@@ -43,7 +43,7 @@ async function sendDiscord(url, content) {
 
 // ---------- COLLECTORS ----------
 async function collectBluesky(q) {
-  const url = `https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=${encodeURIComponent(q)}&sort=latest&limit=25`;
+  const url = `https://api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=${encodeURIComponent(q)}&sort=latest&limit=25`;
   const data = await fetchJSON(url);
   return (data.posts || []).map(p => ({
     id: `bsky:${p.uri}`,
