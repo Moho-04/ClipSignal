@@ -118,11 +118,10 @@ async function main() {
     const p = fresh[s.i]; if (!p) continue;
     const inserted = await sql`INSERT INTO published (id, ts, free) VALUES (${p.id}, now(), false) ON CONFLICT (id) DO NOTHING RETURNING id`;
     if (!inserted.length) continue; // already published
-    await fetch(PAID_WEBHOOK, { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: fmt(p, s) }) });
-    if (freeLeft > 0 && FREE_WEBHOOK) {
-      await fetch(FREE_WEBHOOK, { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: `🆓 Free sample — ${fmt(p, s)}\n*Full feed: paid tier*` }) });
+   const res = await fetch(PAID_WEBHOOK, { method: "POST", headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ content: fmt(p, s) }) });
+if (!res.ok) console.error("Discord webhook FAILED:", res.status);
+
       await sql`UPDATE published SET free = true WHERE id = ${p.id}`;
       freeLeft--;
     }
