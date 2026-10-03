@@ -12,15 +12,15 @@ const THIRTY_S = 1000 * 60 * 30; // 30 min
 
 const QUERIES = [
   { q: "looking for a video editor", src: "shortform" },
-  { q: "need a video editor",        src: "shortform" },
-  { q: "need an editor",             src: "shortform" },
-  { q: "looking for an editor",      src: "shortform" },
-  { q: "hiring video editor",        src: "shortform" },
-  { q: "editor for my channel",      src: "shortform" },
-  { q: "looking for a designer",     src: "design" },
-  { q: "need a designer",            src: "design" },
-  { q: "looking for a web developer", src: "webdev" },
-  { q: "need a web developer",       src: "webdev" },
+  { q: "need a video editor", src: "shortform" },
+  { q: "hiring video editor", src: "shortform" },
+  { q: "video editor needed", src: "shortform" },
+  { q: "looking for a YouTube editor", src: "shortform" },
+  { q: "need a YouTube editor", src: "shortform" },
+  { q: "looking for a shorts editor", src: "shortform" },
+  { q: "need a reels editor", src: "shortform" },
+  { q: "someone to edit my videos", src: "shortform" },
+  { q: "podcast video editor", src: "shortform" },
 ];
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -91,7 +91,6 @@ async function collectReddit(q) {
 }
 
 // ---------- SCORING ----------
-// ---------- SCORING ----------
 async function scoreBatch(posts) {
   const prompt = `You score freelance-buying-intent posts. For each post return JSON array of
 {"i":<index>,"score":0-100,"reasons":["..."],"is_hiring":true|false}.
@@ -118,6 +117,7 @@ ${posts.map((p, i) => `[${i}] ${p.source}: ${p.text}`).join("\n")}`;
   }
   throw new Error("Gemini unavailable after 4 attempts — will retry next cron run");
 }
+Only count a lead if the person is seeking paid video-editing help (YouTube, Shorts, Reels, or podcast clips); reject email marketing, copywriting, sales, web development, and unrelated design roles.
 
 // ---------- FORMAT ----------
 function fmt(p, s) {
