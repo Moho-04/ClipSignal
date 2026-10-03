@@ -98,7 +98,8 @@ Score high ONLY if someone is actively seeking to hire a freelancer NOW:
 - 90-100: explicit hire request with clear need ("looking for", "need", "budget", "paid")
 - 70-89: seeking/asking for recommendations
 - <70: chatter, portfolios, jokes, offers TO work, old/incomplete
-Never invent budgets. Posts:
+Never invent budgets. Only count a lead if the person is seeking paid video-editing help (YouTube, Shorts, Reels, or podcast clips); reject email marketing, copywriting, sales, web development, and unrelated design roles.
+Posts:
 ${posts.map((p, i) => `[${i}] ${p.source}: ${p.text}`).join("\n")}`;
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`;
   for (let attempt = 1; attempt <= 4; attempt++) {
@@ -117,7 +118,6 @@ ${posts.map((p, i) => `[${i}] ${p.source}: ${p.text}`).join("\n")}`;
   }
   throw new Error("Gemini unavailable after 4 attempts — will retry next cron run");
 }
-Only count a lead if the person is seeking paid video-editing help (YouTube, Shorts, Reels, or podcast clips); reject email marketing, copywriting, sales, web development, and unrelated design roles.
 
 // ---------- FORMAT ----------
 function fmt(p, s) {
